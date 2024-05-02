@@ -1,0 +1,61 @@
+From ce71438d77568b086c229fc04b79d708c18bc894 Mon Sep 17 00:00:00 2001
+From: Ivan Trubach <mr.trubach@icloud.com>
+Date: Tue, 30 Apr 2024 00:05:32 +0300
+Subject: [PATCH 1/2] Allow loading modules from default library search path
+
+When loading external device modules, use relative file name (i.e.
+default search path) before trying absolute path at the leechcore
+library installation directory.
+
+This allows using RUNPATH, LD_LIBRARY_PATH and similar mechanisms for
+device modules.
+
+Note w.r.t. implementation: techincally, it would be more efficient to
+append string to the end of the buffer, call LoadLibraryA with a sliced
+array and, if that fails, prepend the absolute path, all in-place with
+one buffer. However, the performance impact seems to be negligible and,
+at least for me, string operations in C are PITA since you always have
+to re-invent the wheel for basic operations (that sometimes are
+implemenented but have footguns all over the place).
+---
+ leechcore/leechcore.c | 21 ++++++++++++++-------
+ 1 file changed, 14 insertions(+), 7 deletions(-)
+
+diff --git a/leechcore/leechcore.c b/leechcore/leechcore.c
+index f25a36e..8fc1527 100644
+--- a/leechcore/leechcore.c
++++ b/leechcore/leechcore.c
+@@ -209,16 +209,23 @@ EXPORTED_FUNCTION QWORD LcDeviceParameterGetNumeric(_In_ PLC_CONTEXT ctxLC, _In_
+ _Success_(return)
+ BOOL LcCreate_FetchDevice_FromExternalModule(_Inout_ PLC_CONTEXT ctx, _In_opt_ DWORD cszDevice, _In_opt_ LPSTR szDeviceAlt)
+ {
+-    CHAR szModule[2 * MAX_PATH] = { 0 };
+-    Util_GetPathLib(szModule);
+-    strcat_s(szModule, sizeof(szModule), "leechcore_device_");
++    CHAR szFileName[2 * MAX_PATH] = { 0 };
++    strcat_s(szFileName, sizeof(szFileName), "leechcore_device_");
+     if(szDeviceAlt) {
+-        strcat_s(szModule, sizeof(szModule), szDeviceAlt);
++        strcat_s(szFileName, sizeof(szFileName), szDeviceAlt);
+     } else {
+-        strncat_s(szModule, sizeof(szModule), ctx->Config.szDevice, cszDevice);
++        strncat_s(szFileName, sizeof(szFileName), ctx->Config.szDevice, cszDevice);
+     }
+-    strcat_s(szModule, sizeof(szModule), LC_LIBRARY_FILETYPE);
+-    if((ctx->hDeviceModule = LoadLibraryA(szModule))) {
++    strcat_s(szFileName, sizeof(szFileName), LC_LIBRARY_FILETYPE);
++
++    if(!(ctx->hDeviceModule = LoadLibraryA(szFileName))) {
++        CHAR szModule[2 * MAX_PATH] = { 0 };
++        Util_GetPathLib(szModule);
++        strcat_s(szModule, sizeof(szModule), szFileName);
++        ctx->hDeviceModule = LoadLibraryA(szModule);
++    }
++
++    if(ctx->hDeviceModule) {
+         if((ctx->pfnCreate = (BOOL(*)(PLC_CONTEXT, PPLC_CONFIG_ERRORINFO))GetProcAddress(ctx->hDeviceModule, "LcPluginCreate"))) {
+             if(szDeviceAlt) {
+                 strcpy_s(ctx->Config.szDeviceName, sizeof(ctx->Config.szDeviceName), szDeviceAlt);
+-- 
+2.44.0
+

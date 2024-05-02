@@ -1,0 +1,22 @@
+name: CI
+on:
+  workflow_dispatch:
+  push:
+jobs:
+  flake-check:
+    strategy:
+      matrix:
+        runner:
+          - ubuntu-22.04 # x86-64
+          - macos-13 # x86-64
+          - macos-14 # aarch64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.4
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v10
+      - name: Enable magic Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v4
+      - name: Run checks
+        run: nix flake check --all-systems

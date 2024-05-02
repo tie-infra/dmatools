@@ -1,0 +1,109 @@
+From 0959c5aadddc8e9a9c4180a560610aef6fc95bff Mon Sep 17 00:00:00 2001
+From: Ivan Trubach <mr.trubach@icloud.com>
+Date: Wed, 1 May 2024 09:24:33 +0300
+Subject: [PATCH] Allow loading libraries from dlopen search path
+
+---
+ vmm/oscompatibility.c |  5 +----
+ vmm/pdb.c             | 14 ++++++++++----
+ vmm/pluginmanager.c   |  6 ++++++
+ vmm/vmmyarawrap.c     | 16 +++++++++++-----
+ 4 files changed, 28 insertions(+), 13 deletions(-)
+
+diff --git a/vmm/oscompatibility.c b/vmm/oscompatibility.c
+index d0936f2..f56503d 100644
+--- a/vmm/oscompatibility.c
++++ b/vmm/oscompatibility.c
+@@ -74,10 +74,7 @@ _Ret_maybenull_ HMODULE WINAPI LoadLibraryU(_In_ LPCSTR lpLibFileName)
+     if(!strcmp(lpLibFileName, "ntdll.dll")) {
+         return (HMODULE)0x1000;      // FAKE HMODULE
+     }
+-    if(lpLibFileName[0] == '/') {
+-        return dlopen(lpLibFileName, RTLD_NOW);
+-    }
+-    return 0;
++    return dlopen(lpLibFileName, RTLD_NOW);
+ }
+ 
+ BOOL FreeLibrary(_In_ HMODULE hLibModule)
+diff --git a/vmm/pdb.c b/vmm/pdb.c
+index 9ed4994..80f1c92 100644
+--- a/vmm/pdb.c
++++ b/vmm/pdb.c
+@@ -1324,11 +1324,17 @@ fail_mspdb:
+     // 3: Try initialize pdb subsystem using the wrapper library pdbcrust around the rust pdb crate.
+     //    This is only done if the MSPDB loading was not successful.
+     if(!fValidMSPDB) {
+-        ZeroMemory(szPathLib, sizeof(szPathLib));
+-        Util_GetPathLib(szPathLib);
+-        strncat_s(szPathLib, MAX_PATH, "libpdbcrust"VMM_LIBRARY_FILETYPE, _TRUNCATE);
+-        ctx->crust.hModule = LoadLibraryU(szPathLib);
++        ctx->crust.hModule = LoadLibraryU("libpdbcrust"VMM_LIBRARY_FILETYPE);
++        if(!ctx->crust.hModule) {
++            ZeroMemory(szPathLib, sizeof(szPathLib));
++            Util_GetPathLib(szPathLib);
++            strncat_s(szPathLib, MAX_PATH, "libpdbcrust"VMM_LIBRARY_FILETYPE, _TRUNCATE);
++            ctx->crust.hModule = LoadLibraryU(szPathLib);
++        }
+ #ifndef _WIN32
++        if(!ctx->crust.hModule) {
++            ctx->crust.hModule = LoadLibraryU("libpdbcrust2"VMM_LIBRARY_FILETYPE);
++        }
+         if(!ctx->crust.hModule) {
+             ZeroMemory(szPathLib, sizeof(szPathLib));
+             Util_GetPathLib(szPathLib);
+diff --git a/vmm/pluginmanager.c b/vmm/pluginmanager.c
+index 736a021..90f3c6f 100644
+--- a/vmm/pluginmanager.c
++++ b/vmm/pluginmanager.c
+@@ -1012,6 +1012,7 @@ VOID PluginManager_Initialize_Python(_In_ VMM_HANDLE H)
+     BOOL fPythonStandalone = FALSE;
+     VMMDLL_PLUGIN_REGINFO ri;
+     CHAR szPythonPath[MAX_PATH];
++    CHAR szPath[MAX_PATH];
+     HMODULE hDllPython3X = NULL, hDllPyPlugin = NULL;
+     VOID(*pfnInitializeVmmPlugin)(_In_ VMM_HANDLE H, _In_ PVMMDLL_PLUGIN_REGINFO pRegInfo);
+     // 0: Verify that Python should be enabled
+@@ -1079,6 +1080,11 @@ VOID PluginManager_Initialize_Python(_In_ VMM_HANDLE H)
+     VmmLog(H, MID_PLUGIN, LOGLEVEL_DEBUG, "PYTHON_PATH: %s", H->cfg.szPythonPath);
+     // 7: process 'special status' python plugin manager.
+     hDllPyPlugin = dlopen("vmmpyc.so", RTLD_NOW | RTLD_GLOBAL);
++    if(!hDllPyPlugin) {
++        Util_GetPathLib(szPath);
++        strcat_s(szPath, MAX_PATH, "vmmpyc.so");
++        hDllPyPlugin = dlopen(szPath, RTLD_NOW | RTLD_GLOBAL);
++    }
+     if(!hDllPyPlugin) {
+         VmmLog(H, MID_PLUGIN, LOGLEVEL_WARNING, "Python plugin manager failed to load.");
+         goto fail;
+diff --git a/vmm/vmmyarawrap.c b/vmm/vmmyarawrap.c
+index 1e0df9d..d4fa4ca 100644
+--- a/vmm/vmmyarawrap.c
++++ b/vmm/vmmyarawrap.c
+@@ -66,12 +66,18 @@ VOID VmmYara_Initialize()
+ {
+     CHAR szLibraryPath[MAX_PATH];
+     if(g_VmmYaraInitialized || g_VmmYaraInitializeFail) { return; }
+-    ZeroMemory(szLibraryPath, sizeof(szLibraryPath));
+-    Util_GetPathLib(szLibraryPath);
+-    strcat_s(szLibraryPath, MAX_PATH, "vmmyara"VMM_LIBRARY_FILETYPE);
+-    g_VmmYaraDLL = LoadLibraryU(szLibraryPath);
++    g_VmmYaraDLL = LoadLibraryU("vmmyara"VMM_LIBRARY_FILETYPE);
++    if(!g_VmmYaraDLL) {
++        ZeroMemory(szLibraryPath, sizeof(szLibraryPath));
++        Util_GetPathLib(szLibraryPath);
++        strcat_s(szLibraryPath, MAX_PATH, "vmmyara"VMM_LIBRARY_FILETYPE);
++        g_VmmYaraDLL = LoadLibraryU(szLibraryPath);
++    }
+ #ifndef _WIN32
+-if(!g_VmmYaraDLL) {
++    if(!g_VmmYaraDLL) {
++        g_VmmYaraDLL = LoadLibraryU("vmmyara2"VMM_LIBRARY_FILETYPE);
++    }
++    if(!g_VmmYaraDLL) {
+         ZeroMemory(szLibraryPath, sizeof(szLibraryPath));
+         Util_GetPathLib(szLibraryPath);
+         strcat_s(szLibraryPath, MAX_PATH, "vmmyara2"VMM_LIBRARY_FILETYPE);
+-- 
+2.44.0
+

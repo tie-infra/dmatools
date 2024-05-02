@@ -1,0 +1,45 @@
+From 7d78d6f510c3b7f322f5e3240540d254215f2fce Mon Sep 17 00:00:00 2001
+From: Ivan Trubach <mr.trubach@icloud.com>
+Date: Wed, 1 May 2024 05:19:20 +0300
+Subject: [PATCH 2/2] Allow loading libMSCompression.so from library search
+ path
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+This allows using system’s ms-compress library instead of requiring a
+copy to be bundled with LeechCore library.
+---
+ leechcore/device_hibr.c | 11 +++++++----
+ 1 file changed, 7 insertions(+), 4 deletions(-)
+
+diff --git a/leechcore/device_hibr.c b/leechcore/device_hibr.c
+index ea29c44..46927d0 100644
+--- a/leechcore/device_hibr.c
++++ b/leechcore/device_hibr.c
+@@ -170,15 +170,18 @@ NTSTATUS OSCOMPAT_RtlDecompressBufferEx(USHORT CompressionFormat, PUCHAR Uncompr
+     static SRWLOCK LockSRW = SRWLOCK_INIT;
+     static int(*pfn_xpress_decompress)(PBYTE pbIn, SIZE_T cbIn, PBYTE pbOut, SIZE_T *pcbOut) = NULL;
+     static int(*pfn_xpress_decompress_huff)(PBYTE pbIn, SIZE_T cbIn, PBYTE pbOut, SIZE_T * pcbOut) = NULL;
+-    CHAR szPathLib[MAX_PATH] = { 0 };
+-    Util_GetPathLib(szPathLib);
+-    strncat_s(szPathLib, sizeof(szPathLib), "libMSCompression.so", _TRUNCATE);
+     if((CompressionFormat != 3) && (CompressionFormat != 4)) { return HIBR_STATUS_UNSUCCESSFUL; } // 3 == COMPRESS_ALGORITHM_XPRESS, 4 == COMPRESS_ALGORITHM_XPRESS_HUFF
+     if(fFirst) {
+         AcquireSRWLockExclusive(&LockSRW);
+         if(fFirst) {
+             fFirst = FALSE;
+-            lib_mscompress = dlopen(szPathLib, RTLD_NOW);
++            lib_mscompress = dlopen("libMSCompression.so", RTLD_NOW);
++            if(!lib_mscompress) {
++                CHAR szPathLib[MAX_PATH] = { 0 };
++                Util_GetPathLib(szPathLib);
++                strncat_s(szPathLib, sizeof(szPathLib), "libMSCompression.so", _TRUNCATE);
++                lib_mscompress = dlopen(szPathLib, RTLD_NOW);
++            }
+             if(lib_mscompress) {
+                 pfn_xpress_decompress = (int(*)(PBYTE, SIZE_T, PBYTE, SIZE_T *))dlsym(lib_mscompress, "xpress_decompress");
+                 pfn_xpress_decompress_huff = (int(*)(PBYTE, SIZE_T, PBYTE, SIZE_T *))dlsym(lib_mscompress, "xpress_huff_decompress");
+-- 
+2.44.0
+

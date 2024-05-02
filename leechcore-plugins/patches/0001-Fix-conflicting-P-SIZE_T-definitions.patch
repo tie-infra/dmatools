@@ -1,0 +1,26 @@
+From c0b951330433761bfb560634500467468aed2628 Mon Sep 17 00:00:00 2001
+From: Ivan Trubach <mr.trubach@icloud.com>
+Date: Thu, 2 May 2024 10:09:37 +0300
+Subject: [PATCH] Fix conflicting {P,}SIZE_T definitions
+
+Fixes build on x86 systems (i.e. 32-bit builds).
+---
+ leechcore_device_rawtcp/oscompatibility.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/leechcore_device_rawtcp/oscompatibility.h b/leechcore_device_rawtcp/oscompatibility.h
+index c52701e..42646c9 100644
+--- a/leechcore_device_rawtcp/oscompatibility.h
++++ b/leechcore_device_rawtcp/oscompatibility.h
+@@ -22,7 +22,7 @@ typedef void                                *HANDLE, **PHANDLE;
+ typedef char                                CHAR, *PCHAR, *PSTR, *LPSTR;
+ typedef uint16_t                            WORD, *PWORD, USHORT, *PUSHORT;
+ typedef uint32_t                            DWORD, *PDWORD;
+-typedef uint64_t                            SIZE_T, *PSIZE_T;
++typedef size_t                              SIZE_T, *PSIZE_T;
+ 
+ #define SOCKET                              int
+ #define INVALID_SOCKET	                    -1
+-- 
+2.44.0
+

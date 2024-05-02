@@ -1,0 +1,23 @@
+name: Update
+on:
+  workflow_dispatch:
+  schedule:
+    # At 10:00 UTC on Friday.
+    - cron: '0 10 * * 5'
+jobs:
+  flake-lock:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.4
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v10
+      - name: Enable magic Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v4
+      - name: Check flake
+        uses: DeterminateSystems/flake-checker-action@v5
+      - name: Update flake.lock
+        uses: DeterminateSystems/update-flake-lock@v21
+        with:
+          pr-title: 'chore: run nix flake update'
+          commit-msg: 'chore: run nix flake update'

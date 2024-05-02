@@ -1,0 +1,2 @@
+option('python', type : 'string', value : 'python3')
+option('infodb', type : 'string')
