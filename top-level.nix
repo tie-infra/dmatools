@@ -25,9 +25,9 @@
     legacyPackages = pkgsCross.x86;
 
     checks = {
-      leechcore-aarch64 = pkgsCross.aarch64.leechcore;
-      leechcore-x86-64 = pkgsCross.x86-64.leechcore;
-      leechcore-x86 = pkgsCross.x86.leechcore;
+      pcileech-aarch64 = pkgsCross.aarch64.pcileech;
+      pcileech-x86-64 = pkgsCross.x86-64.pcileech;
+      pcileech-x86 = pkgsCross.x86.pcileech;
 
       memprocfs-aarch64 = pkgsCross.aarch64.memprocfs;
       memprocfs-x86-64 = pkgsCross.x86-64.memprocfs;
