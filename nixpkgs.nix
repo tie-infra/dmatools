@@ -13,12 +13,22 @@
         in
         lib.genAttrs [ "glibc" "glibcCross" ] (attr: overridePatch prev.${attr});
 
+      # See https://github.com/NixOS/nixpkgs/pull/308830
+      fixSystemdSandbox = _: prev: {
+        systemd = prev.systemd.overrideAttrs (oldAttrs: {
+          mesonFlags = oldAttrs.mesonFlags ++ [
+            (lib.mesonOption "split-bin" "true")
+          ];
+        });
+      };
+
       nixpkgsArgs = {
         localSystem = { inherit system; };
         overlays = [
           self.overlays.default
         ] ++ lib.optionals (lib.hasSuffix "-darwin" system) [
           fixNixpkgsIssue303193
+          fixSystemdSandbox
         ];
       };
 
