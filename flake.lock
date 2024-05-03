@@ -34,18 +34,18 @@
         "type": "indirect"
       }
     },
-    "nixpkgs-staging": {
+    "nixpkgs-303193": {
       "locked": {
-        "lastModified": 1714720034,
-        "narHash": "sha256-VOovqY2SLJQfT0TORoBUZB6LZpNkpB9yn9VESTQcKjs=",
+        "lastModified": 1713082163,
+        "narHash": "sha256-dSdzt64OwXJ/Cq6I+VBKjjkd+W6DCeIRCZyr75Yw99c=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "1095a7db7590b98959980bccab0dbf1d44dbcd08",
+        "rev": "dd8e61da4aadb1288e9db2ded077bb74628c28ac",
         "type": "github"
       },
       "original": {
         "id": "nixpkgs",
-        "ref": "staging",
+        "rev": "dd8e61da4aadb1288e9db2ded077bb74628c28ac",
         "type": "indirect"
       }
     },
@@ -53,7 +53,7 @@
       "inputs": {
         "flake-parts": "flake-parts",
         "nixpkgs": "nixpkgs",
-        "nixpkgs-staging": "nixpkgs-staging",
+        "nixpkgs-303193": "nixpkgs-303193",
         "treefmt-nix": "treefmt-nix"
       }
     },
