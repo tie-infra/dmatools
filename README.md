@@ -10,9 +10,9 @@ We run flake checks for the following configurations:
 
 | <div align=right>Nix system</div><div align=left>Nixpkgs config</div> |   aarch64-linux  | x86_64-linux | aarch64-darwin | x86_64-darwin |
 |-----------------------------------------------------------------------|:----------------:|:------------:|:--------------:|:-------------:|
-| aarch64-unknown-linux-gnu                                             | &#x2611;&#xFE0F; |   &#x2705;   |                |               |
-| x86_64-unknown-linux-gnu                                              | &#x2611;&#xFE0F; |   &#x2705;   |                |               |
-| i686-unknown-linux-gnu                                                | &#x2611;&#xFE0F; |   &#x2705;   |                |               |
+| aarch64-unknown-linux-gnu                                             | &#x2611;&#xFE0F; |   &#x2705;   |    &#x2705;    |               |
+| x86_64-unknown-linux-gnu                                              | &#x2611;&#xFE0F; |   &#x2705;   |    &#x2705;    |               |
+| i686-unknown-linux-gnu                                                | &#x2611;&#xFE0F; |   &#x2705;   |    &#x2705;    |               |
 
 The primary development machine is `aarch64-linux` system, however, GitHub
 Actions CI does not provide AArch64 runners on Linux and Apple Silicon runners
