@@ -11,14 +11,13 @@
             ];
           });
         in
-        lib.optionalAttrs
-          prev.stdenv.buildPlatform.isDarwin # NB final causes infinite recursion
-          (lib.genAttrs [ "glibc" "glibcCross" ] (attr: overridePatch prev.${attr}));
+        lib.genAttrs [ "glibc" "glibcCross" ] (attr: overridePatch prev.${attr});
 
       nixpkgsArgs = {
         localSystem = { inherit system; };
         overlays = [
           self.overlays.default
+        ] ++ lib.optionals (lib.hasSuffix "-darwin" system) [
           fixNixpkgsIssue303193
         ];
       };
