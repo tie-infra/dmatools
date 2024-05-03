@@ -21,10 +21,8 @@
     pcileech
   ]);
 
-  perSystem = { pkgsCross, ... }: {
-    legacyPackages = pkgsCross.x86;
-
-    checks = {
+  perSystem = { self', pkgsCross, ... }: {
+    packages = {
       pcileech-aarch64 = pkgsCross.aarch64.pcileech;
       pcileech-x86-64 = pkgsCross.x86-64.pcileech;
       pcileech-x86 = pkgsCross.x86.pcileech;
@@ -33,5 +31,7 @@
       memprocfs-x86-64 = pkgsCross.x86-64.memprocfs;
       memprocfs-x86 = pkgsCross.x86.memprocfs;
     };
+
+    checks = self'.packages;
   };
 }
