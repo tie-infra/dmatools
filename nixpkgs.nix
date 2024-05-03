@@ -6,7 +6,7 @@
         let
           patchPath = "/pkgs/development/libraries/glibc/2.39-master.patch";
           overridePatch = p: p.overrideAttrs (oldAttrs: {
-            oldAttrs = lib.remove (prev.path + patchPath) oldAttrs.patches ++ [
+            patches = lib.remove (prev.path + patchPath) oldAttrs.patches ++ [
               (inputs.nixpkgs-staging + patchPath)
             ];
           });
