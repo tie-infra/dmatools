@@ -1,9 +1,26 @@
-{ self, inputs, ... }: {
+{ self, inputs, lib, ... }: {
   perSystem = { system, ... }:
     let
+      # See https://github.com/NixOS/nixpkgs/issues/303193
+      fixNixpkgsIssue303193 = final: prev:
+        let
+          patchPath = "/pkgs/development/libraries/glibc/2.39-master.patch";
+          overridePatch = p: p.overrideAttrs (oldAttrs: {
+            oldAttrs = lib.remove (final.path + patchPath) oldAttrs.patches ++ [
+              (inputs.nixpkgs-staging + patchPath)
+            ];
+          });
+        in
+        lib.optionalAttrs
+          prev.stdenv.buildPlatform.isDarwin # NB final causes infinite recursion
+          (lib.genAttrs [ "glibc" "glibcCross" ] (attr: overridePatch prev.${attr}));
+
       nixpkgsArgs = {
         localSystem = { inherit system; };
-        overlays = [ self.overlays.default ];
+        overlays = [
+          self.overlays.default
+          fixNixpkgsIssue303193
+        ];
       };
 
       nixpkgsFun = newArgs: import inputs.nixpkgs (nixpkgsArgs // newArgs);

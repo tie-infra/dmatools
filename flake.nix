@@ -4,6 +4,10 @@
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
 
+    # Fix for https://github.com/NixOS/nixpkgs/issues/303193 is not in unstable
+    # channel yet.
+    nixpkgs-staging.url = "nixpkgs/staging";
+
     flake-parts.url = "flake-parts";
     flake-parts.inputs.nixpkgs-lib.follows = "nixpkgs";
 
