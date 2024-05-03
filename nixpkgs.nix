@@ -2,11 +2,11 @@
   perSystem = { system, ... }:
     let
       # See https://github.com/NixOS/nixpkgs/issues/303193
-      fixNixpkgsIssue303193 = final: prev:
+      fixNixpkgsIssue303193 = _: prev:
         let
           patchPath = "/pkgs/development/libraries/glibc/2.39-master.patch";
           overridePatch = p: p.overrideAttrs (oldAttrs: {
-            oldAttrs = lib.remove (final.path + patchPath) oldAttrs.patches ++ [
+            oldAttrs = lib.remove (prev.path + patchPath) oldAttrs.patches ++ [
               (inputs.nixpkgs-staging + patchPath)
             ];
           });
